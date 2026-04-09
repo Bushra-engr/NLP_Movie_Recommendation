@@ -1,5 +1,6 @@
 import requests
 import streamlit as st
+import os
 
 # =============================
 # CONFIG
@@ -12,6 +13,14 @@ st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wid
 # =============================
 # STYLES (minimal modern)
 # =============================
+api_key = os.getenv("API_KEY")
+
+if not api_key:
+    st.warning("API key missing. Please enter your API key below 👇")
+    api_key = st.text_input("Enter API Key", type="password")
+
+if api_key:
+    st.success("API key loaded ✅")
 st.markdown(
     """
 <style>
