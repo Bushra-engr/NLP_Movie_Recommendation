@@ -1,7 +1,10 @@
 services:
-  app:
-    image: bushra148/app
+  movie-app:
+    build: .
     ports:
+      - "8000:8000"
       - "8501:8501"
-    env_file: .env
-    command: streamlit run app.py --server.address=0.0.0.0
+    environment:
+      - TMDB_API_KEY=5f70da5489576ec78c2df4f64b021a1e
+    # Hum start.sh use karenge dono ko ek saath chalane ke liye
+    command: ["sh", "start.sh"]
