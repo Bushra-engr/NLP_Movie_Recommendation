@@ -5,6 +5,8 @@ nltk
 fastapi
 uvicorn
 typing
-dotenv
+python-dotenv
 pydantic
 httpx
+streamlit
+requests
