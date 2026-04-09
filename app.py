@@ -17,8 +17,7 @@ api_key = os.getenv("TMDB_API_KEY")
 
 if not api_key:
     st.warning("API key missing. Please enter your API key below 👇")
-    api_key = st.text_input("Enter API Key", type="password")
-
+   
 if api_key:
     st.success("API key loaded ✅")
 st.markdown(
