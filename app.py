@@ -14,12 +14,6 @@ st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wid
 # STYLES (minimal modern)
 # =============================
 api_key = os.getenv("TMDB_API_KEY")
-
-if not api_key:
-    st.warning("API key missing. Please enter your API key below 👇")
-   
-if api_key:
-    st.success("API key loaded ✅")
 st.markdown(
     """
 <style>
