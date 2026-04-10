@@ -224,7 +224,16 @@ elif st.session_state.view == "details":
 
     data, err = api_get_json(f"/movie/id/{tmdb_id}")
     if err: st.error(f"Error: {err}"); st.stop()
+    # Backdrop full-width banner — columns se pehle
+if data.get("backdrop_url"):
+    st.image(data["backdrop_url"], use_container_width=True)
 
+    left, right = st.columns([1, 2.4], gap="large")
+    with left:
+        if data.get("poster_url"): st.image(data["poster_url"], width="stretch")
+    with right:
+        st.markdown(f"## {data.get('title','')}")
+        st.write(data.get("overview", "No overview."))
     left, right = st.columns([1, 2.4], gap="large")
     with left:
         if data.get("poster_url"): st.image(data["poster_url"], width="stretch")

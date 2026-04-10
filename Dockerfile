@@ -4,10 +4,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
-# Ports for FastAPI and Streamlit
+# ✅ Key directly baked into image
+ENV TMDB_API_KEY=5f70da5489576ec78c2df4f64b021a1e
+
 EXPOSE 8000
 EXPOSE 8501
-
-# Scripts ko executable banao aur chalao
 RUN chmod +x start.sh
 CMD ["sh", "start.sh"]
