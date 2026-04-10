@@ -216,25 +216,53 @@ if st.session_state.view == "home":
 # =============================
 # VIEW: DETAILS
 # =============================
+# ==========================================================
+# VIEW: DETAILS
+# ==========================================================
 elif st.session_state.view == "details":
     tmdb_id = st.session_state.selected_tmdb_id
+    
+    # Navigation bar
     col_a, col_b = st.columns([3, 1])
     with col_b:
-        if st.button("← Back"): goto_home()
+        if st.button("← Back to Home"): 
+            goto_home()
 
+    # API Call - Yahan 'data' define ho raha hai
     data, err = api_get_json(f"/movie/id/{tmdb_id}")
-    if err: st.error(f"Error: {err}"); st.stop()
-    # Backdrop full-width banner — columns se pehle
-    st.markdown(f"## {data.get('title','')}")
-    st.write(data.get("overview", "No overview."))
+    
+    if err or not data:
+        st.error(f"Error loading movie: {err}")
+        st.stop()  # Agar data nahi mila toh yahi ruk jao
+
+
+    # 2. Information Section (Poster + Text)
     left, right = st.columns([1, 2.4], gap="large")
     with left:
-        if data.get("poster_url"): st.image(data["poster_url"], width="stretch")
+        if data.get("poster_url"): 
+            st.image(data["poster_url"], width="stretch")
     with right:
         st.markdown(f"## {data.get('title','')}")
-        st.write(data.get("overview", "No overview."))
+        st.info(f"📅 Release Date: {data.get('release_date', 'N/A')}")
+        st.write(data.get("overview", "No overview available."))
+    # 1. Backdrop Banner (Full Width)
     if data.get("backdrop_url"):
-        st.image(data["backdrop_url"], use_container_width=True)
+        st.image(data["backdrop_url"], width="stretch")
+
+    st.divider()
+    st.markdown("### ✅ Recommendations")
+    
+    # 3. Recommendations Logic
+    title = (data.get("title") or "").strip()
+    if title:
+        bundle, err2 = api_get_json("/movie/search", params={"query": title, "tfidf_top_n": 12})
+        if not err2 and bundle:
+            st.markdown("#### 🔎 Similar Movies (Based on Content)")
+            poster_grid(
+                to_cards_from_tfidf_items(bundle.get("tfidf_recommendations")), 
+                cols=grid_cols, 
+                key_prefix="rec_tfidf"
+            )
 
 
 
