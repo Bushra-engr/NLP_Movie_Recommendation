@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 from fastapi import FastAPI, Query, HTTPException, Response
 from pydantic import Field, BaseModel
 import pandas as pd
@@ -9,7 +8,6 @@ from typing import Literal, List, Dict, Optional, Any, Tuple
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
-load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 
 TMDB_BASE = "https://api.themoviedb.org/3"

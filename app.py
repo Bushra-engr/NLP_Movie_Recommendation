@@ -5,8 +5,8 @@ import os
 # =============================
 # CONFIG
 # =============================
-# Note: Use Render URL for cloud deployment, localhost for local docker testing
-API_BASE = "http://localhost:8000"
+API_BASE = os.getenv("API_BASE", "http://localhost:8000")
+
 TMDB_IMG = "https://image.tmdb.org/t/p/w500"
 
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")

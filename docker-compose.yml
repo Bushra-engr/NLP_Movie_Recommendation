@@ -5,6 +5,5 @@ services:
       - "8000:8000"
       - "8501:8501"
     environment:
-      - TMDB_API_KEY=5f70da5489576ec78c2df4f64b021a1e
-    # Hum start.sh use karenge dono ko ek saath chalane ke liye
+  - TMDB_API_KEY=${TMDB_API_KEY}   
     command: ["sh", "start.sh"]
