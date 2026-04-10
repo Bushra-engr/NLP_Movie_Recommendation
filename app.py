@@ -5,33 +5,26 @@ import os
 # =============================
 # CONFIG
 # =============================
+# Docker ya Local ke liye API Base URL
 API_BASE = os.getenv("API_BASE", "http://localhost:8000")
-
 TMDB_IMG = "https://image.tmdb.org/t/p/w500"
 
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 
 # =============================
-# API KEY & STYLES
+# STYLES (Modern UI)
 # =============================
-# Retrieval of API Key from Environment
-api_key = os.getenv("TMDB_API_KEY")
-
 st.markdown(
     """
 <style>
 .block-container { padding-top: 1rem; padding-bottom: 2rem; max-width: 1400px; }
 .small-muted { color:#6b7280; font-size: 0.92rem; }
-.movie-title { font-size: 0.9rem; line-height: 1.15rem; height: 2.3rem; overflow: hidden; }
+.movie-title { font-size: 0.9rem; line-height: 1.15rem; height: 2.3rem; overflow: hidden; font-weight: bold; margin-top: 5px;}
 .card { border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 14px; background: rgba(255,255,255,0.7); }
 </style>
 """,
     unsafe_allow_html=True,
 )
-
-# Check if API Key exists (Optional: display warning if missing)
-if not api_key:
-    st.sidebar.warning("⚠️ TMDB_API_KEY not found in Environment Variables.")
 
 # =============================
 # STATE + ROUTING
@@ -41,6 +34,7 @@ if "view" not in st.session_state:
 if "selected_tmdb_id" not in st.session_state:
     st.session_state.selected_tmdb_id = None
 
+# Query params handling
 qp_view = st.query_params.get("view")
 qp_id = st.query_params.get("id")
 
@@ -73,17 +67,16 @@ def goto_details(tmdb_id: int):
 @st.cache_data(ttl=30)
 def api_get_json(path: str, params: dict | None = None):
     try:
-        # Pass API Key in params if your backend requires it
         r = requests.get(f"{API_BASE}{path}", params=params, timeout=25)
         if r.status_code >= 400:
             return None, f"HTTP {r.status_code}: {r.text[:300]}"
         return r.json(), None
     except Exception as e:
-        return None, f"Request failed: {e}"
+        return None, f"Connection Error: {e}"
 
 def poster_grid(cards, cols=6, key_prefix="grid"):
     if not cards:
-        st.info("No movies to show.")
+        st.info("No movies found.")
         return
 
     rows = (len(cards) + cols - 1) // cols
@@ -91,29 +84,22 @@ def poster_grid(cards, cols=6, key_prefix="grid"):
     for r in range(rows):
         colset = st.columns(cols)
         for c in range(cols):
-            if idx >= len(cards):
-                break
+            if idx >= len(cards): break
             m = cards[idx]
             idx += 1
-
             tmdb_id = m.get("tmdb_id")
             title = m.get("title", "Untitled")
             poster = m.get("poster_url")
 
             with colset[c]:
-                # FIXED: Replaced use_container_width with width="stretch"
                 if poster:
-                    st.image(poster, width="stretch") 
+                    st.image(poster, width="stretch")
                 else:
                     st.write("🖼️ No poster")
-
+                
                 if st.button("Open", key=f"{key_prefix}_{r}_{c}_{idx}_{tmdb_id}"):
-                    if tmdb_id:
-                        goto_details(tmdb_id)
-
-                st.markdown(
-                    f"<div class='movie-title'>{title}</div>", unsafe_allow_html=True
-                )
+                    if tmdb_id: goto_details(tmdb_id)
+                st.markdown(f"<div class='movie-title'>{title}</div>", unsafe_allow_html=True)
 
 def to_cards_from_tfidf_items(tfidf_items):
     cards = []
@@ -131,53 +117,23 @@ def parse_tmdb_search_to_cards(data, keyword: str, limit: int = 24):
     keyword_l = keyword.strip().lower()
     if isinstance(data, dict) and "results" in data:
         raw = data.get("results") or []
-        raw_items = []
-        for m in raw:
-            title = (m.get("title") or "").strip()
-            tmdb_id = m.get("id")
-            poster_path = m.get("poster_path")
-            if not title or not tmdb_id: continue
-            raw_items.append({
-                "tmdb_id": int(tmdb_id),
-                "title": title,
-                "poster_url": f"{TMDB_IMG}{poster_path}" if poster_path else None,
-                "release_date": m.get("release_date", ""),
-            })
+        raw_items = [{"tmdb_id": int(m["id"]), "title": m["title"], "poster_url": f"{TMDB_IMG}{m['poster_path']}" if m.get("poster_path") else None, "release_date": m.get("release_date", "")} for m in raw if m.get("id") and m.get("title")]
     elif isinstance(data, list):
-        raw_items = []
-        for m in data:
-            tmdb_id = m.get("tmdb_id") or m.get("id")
-            title = (m.get("title") or "").strip()
-            poster_url = m.get("poster_url")
-            if not title or not tmdb_id: continue
-            raw_items.append({
-                "tmdb_id": int(tmdb_id),
-                "title": title,
-                "poster_url": poster_url,
-                "release_date": m.get("release_date", ""),
-            })
-    else:
-        return [], []
+        raw_items = [{"tmdb_id": int(m.get("tmdb_id") or m.get("id")), "title": m["title"], "poster_url": m.get("poster_url"), "release_date": m.get("release_date", "")} for m in data if (m.get("tmdb_id") or m.get("id")) and m.get("title")]
+    else: return [], []
 
     matched = [x for x in raw_items if keyword_l in x["title"].lower()]
     final_list = matched if matched else raw_items
-
-    suggestions = []
-    for x in final_list[:10]:
-        year = (x.get("release_date") or "")[:4]
-        label = f"{x['title']} ({year})" if year else x["title"]
-        suggestions.append((label, x["tmdb_id"]))
-
+    suggestions = [(f"{x['title']} ({x['release_date'][:4]})" if x.get("release_date") else x['title'], x['tmdb_id']) for x in final_list[:10]]
     cards = [{"tmdb_id": x["tmdb_id"], "title": x["title"], "poster_url": x["poster_url"]} for x in final_list[:limit]]
     return suggestions, cards
 
 # =============================
-# SIDEBAR & HEADER
+# SIDEBAR
 # =============================
 with st.sidebar:
     st.markdown("## 🎬 Menu")
-    if st.button("🏠 Home"):
-        goto_home()
+    if st.button("🏠 Home Feed"): goto_home()
     st.markdown("---")
     home_category = st.selectbox("Category", ["trending", "popular", "top_rated", "now_playing", "upcoming"], index=0)
     grid_cols = st.slider("Grid columns", 4, 8, 6)
@@ -189,90 +145,68 @@ st.divider()
 # VIEW: HOME
 # =============================
 if st.session_state.view == "home":
-    typed = st.text_input("Search by movie title", placeholder="Type: avenger, batman...")
+    typed = st.text_input("Search movie title...", placeholder="Type here: e.g. Avatar, Batman")
     st.divider()
 
     if typed.strip():
         if len(typed.strip()) < 2:
-            st.caption("Type at least 2 characters.")
+            st.caption("Type at least 2 chars.")
         else:
-            data, err = api_get_json("/tmdb/search", params={"query": typed.strip()})
+            data_search, err = api_get_json("/tmdb/search", params={"query": typed.strip()})
             if err: st.error(f"Search failed: {err}")
             else:
-                suggestions, cards = parse_tmdb_search_to_cards(data, typed.strip())
+                suggestions, cards = parse_tmdb_search_to_cards(data_search, typed.strip())
                 if suggestions:
-                    labels = ["-- Select a movie --"] + [s[0] for s in suggestions]
-                    selected = st.selectbox("Suggestions", labels, index=0)
-                    if selected != "-- Select a movie --":
+                    labels = ["-- Select Suggestion --"] + [s[0] for s in suggestions]
+                    selected = st.selectbox("Quick Selection", labels, index=0)
+                    if selected != "-- Select Suggestion --":
                         label_to_id = {s[0]: s[1] for s in suggestions}
                         goto_details(label_to_id[selected])
                 poster_grid(cards, cols=grid_cols, key_prefix="search_results")
         st.stop()
 
     home_cards, err = api_get_json("/home", params={"category": home_category, "limit": 24})
-    if err: st.error(f"Home feed failed: {err}")
+    if err: st.error(f"Feed failed: {err}")
     else: poster_grid(home_cards, cols=grid_cols, key_prefix="home_feed")
 
 # =============================
 # VIEW: DETAILS
 # =============================
-# ==========================================================
-# VIEW: DETAILS
-# ==========================================================
 elif st.session_state.view == "details":
     tmdb_id = st.session_state.selected_tmdb_id
     
-    # Navigation bar
+    # Nav row
     col_a, col_b = st.columns([3, 1])
     with col_b:
-        if st.button("← Back to Home"): 
-            goto_home()
+        if st.button("← Back to Results"): goto_home()
 
-    # API Call - Yahan 'data' define ho raha hai
-    data, err = api_get_json(f"/movie/id/{tmdb_id}")
+    # Get data
+    data_detail, err = api_get_json(f"/movie/id/{tmdb_id}")
     
-    if err or not data:
-        st.error(f"Error loading movie: {err}")
-        st.stop()  # Agar data nahi mila toh yahi ruk jao
+    if err or not data_detail:
+        st.error(f"Error: {err or 'Movie not found'}")
+        st.stop()
 
+    # 1. Backdrop Banner
+    if data_detail.get("backdrop_url"):
+        st.image(data_detail["backdrop_url"], width="stretch")
 
-    # 2. Information Section (Poster + Text)
+    # 2. Movie Info (SINGLE INSTANCE)
     left, right = st.columns([1, 2.4], gap="large")
     with left:
-        if data.get("poster_url"): 
-            st.image(data["poster_url"], width="stretch")
+        if data_detail.get("poster_url"):
+            st.image(data_detail["poster_url"], width="stretch")
     with right:
-        st.markdown(f"## {data.get('title','')}")
-        st.info(f"📅 Release Date: {data.get('release_date', 'N/A')}")
-        st.write(data.get("overview", "No overview available."))
-    # 1. Backdrop Banner (Full Width)
-    if data.get("backdrop_url"):
-        st.image(data["backdrop_url"], width="stretch")
+        st.markdown(f"# {data_detail.get('title','')}")
+        st.info(f"📅 Release: {data_detail.get('release_date', 'N/A')}")
+        st.write(data_detail.get("overview", "No overview available."))
 
     st.divider()
-    st.markdown("### ✅ Recommendations")
+    st.markdown("### ✅ Similar Recommendations")
     
-    # 3. Recommendations Logic
-    title = (data.get("title") or "").strip()
-    if title:
-        bundle, err2 = api_get_json("/movie/search", params={"query": title, "tfidf_top_n": 12})
+    movie_title = (data_detail.get("title") or "").strip()
+    if movie_title:
+        bundle, err2 = api_get_json("/movie/search", params={"query": movie_title, "tfidf_top_n": 12})
         if not err2 and bundle:
-            st.markdown("#### 🔎 Similar Movies (Based on Content)")
-            poster_grid(
-                to_cards_from_tfidf_items(bundle.get("tfidf_recommendations")), 
-                cols=grid_cols, 
-                key_prefix="rec_tfidf"
-            )
-
-
-
-    st.divider()
-    st.markdown("### ✅ Recommendations")
-    # TF-IDF & Genre Recommendations...
-    # (Rest of the recommendation logic remains the same but with FIXED image width)
-    title = (data.get("title") or "").strip()
-    if title:
-        bundle, err2 = api_get_json("/movie/search", params={"query": title, "tfidf_top_n": 12})
-        if not err2 and bundle:
-            st.markdown("#### 🔎 Similar Movies")
+            st.markdown("#### 🔎 Based on Movie Content")
             poster_grid(to_cards_from_tfidf_items(bundle.get("tfidf_recommendations")), cols=grid_cols, key_prefix="rec_tfidf")
