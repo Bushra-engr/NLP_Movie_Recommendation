@@ -1,39 +1,33 @@
-# NLP Movie Recommendation
+# 🎬 Movie Recommender System (End-to-End)
 
-## Project Overview
-This project uses Natural Language Processing (NLP) techniques to recommend movies based on user preferences, reviews, or other textual inputs.
+A modern, full-stack movie recommendation engine built with **Machine Learning (TF-IDF)**, a **FastAPI** backend, and a **Streamlit** frontend, all orchestrated using **Docker Compose**.
 
-## Features
-- **Movie Recommendations**: Suggest movies based on user input.
-- **User-Friendly Interface**: Interactive interface for input and feedback.
-- **Data Sources**: Utilizes various movie databases and APIs for data.
+## 🚀 Features
+- **Smart Recommendations**: Content-based filtering using TF-IDF and Cosine Similarity.
+- **Live Search**: Auto-suggestions and real-time movie search via TMDB API.
+- **Interactive UI**: Clean, professional dashboard with movie banners, posters, and details.
+- **Containerized Architecture**: Backend and Frontend running in sync using Docker Compose.
+- **Microservices Ready**: Decoupled architecture for high performance and scalability.
 
-## Installation
-1. Clone the repository:  
-   ```bash
-   git clone https://github.com/Bushra-engr/NLP_Movie_Recommendation.git
-   ```
-2. Navigate to the project directory:  
-   ```bash
-   cd NLP_Movie_Recommendation
-   ```
-3. Install the required packages:  
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🛠️ Tech Stack
+- **Frontend**: Streamlit (Python)
+- **Backend**: FastAPI (Uvicorn)
+- **ML Model**: Scikit-Learn (TF-IDF Vectorizer)
+- **Data**: TMDB 5000 Movies Dataset
+- **DevOps**: Docker & Docker Compose
 
-## Usage
-1. Run the main application:  
-   ```bash
-   python main.py
-   ```
-2. Follow the prompts to get movie recommendations.
+---
 
-## Contributing
-Contributions are welcome! Please open an issue or a pull request for any changes or suggestions.
+## 🏗️ Project Architecture
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The application uses a unified Docker environment. The Streamlit frontend communicates with the FastAPI backend over a local bridge network to fetch metadata and compute similarity scores.
 
-## Contact
-For any questions, feel free to reach out to the maintainer: Bushra-engr.
+
+---
+
+## ⚙️ Setup & Installation
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/Bushra-engr/NLP_Movie_Recommendation.git](https://github.com/Bushra-engr/NLP_Movie_Recommendation.git)
+cd NLP_Movie_Recommendation
