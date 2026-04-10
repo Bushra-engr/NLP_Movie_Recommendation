@@ -13,7 +13,7 @@ A modern, full-stack movie recommendation engine built with **Machine Learning (
 - **Frontend**: Streamlit (Python)
 - **Backend**: FastAPI (Uvicorn)
 - **ML Model**: Scikit-Learn (TF-IDF Vectorizer)
-- **Data**: TMDB 5000 Movies Dataset
+- **Data**: TMDB ~50k samples Movies Dataset
 - **DevOps**: Docker & Docker Compose
 
 ---
